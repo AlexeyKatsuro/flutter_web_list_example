@@ -1,11 +1,12 @@
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 
 const kFastDuration = Duration(milliseconds: 200);
-final random = Random();
+final random = math.Random();
 
 MaterialAccentColor randomEdgeColor([_]) => Colors.accents[random.nextInt(Colors.accents.length)];
 
@@ -46,34 +47,51 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final width = math.min(mediaQuery.size.width, 1280.0);
+    final rightEdgeListLeft = width * 7 / 10;
+    final leftEdgeListRight = width * 8 / 10;
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 1280, // max width
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 2, child: LeftEdgeList()),
-                      Expanded(flex: 5, child: MiddleList()),
-                      Expanded(flex: 3, child: RightEdgeList()),
-                    ],
-                  ),
-                ),
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverCrossAxisConstrained(
+            maxCrossAxisExtent: width,
+            child: SliverStack(children: [
+              SliverPadding(
+                key: Key('leftEdge'),
+                padding: EdgeInsets.only(right: leftEdgeListRight) + EdgeInsets.all(16),
+                sliver: LeftEdgeList(),
               ),
-              Padding(
-                padding: const EdgeInsets.only(top: 12.0),
+              SliverPadding(
+                key: Key('middleList'),
+                padding: EdgeInsets.only(right: width - rightEdgeListLeft, left: width - leftEdgeListRight) +
+                    EdgeInsets.symmetric(vertical: 16),
+                sliver: MiddleList(),
+              ),
+              SliverPadding(
+                key: Key('rightEdge'),
+                padding: EdgeInsets.only(left: rightEdgeListLeft) + EdgeInsets.all(16),
+                sliver: RightEdgeList(),
+              ),
+            ]),
+          ),
+          SliverFillRemaining(
+            fillOverscroll: true,
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: Align(
+                alignment: Alignment.bottomCenter,
                 child: Footer(),
               ),
-            ],
-          ),
-        ));
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
 
@@ -83,7 +101,7 @@ class LeftEdgeList extends StatefulWidget {
 }
 
 class _LeftEdgeListState extends State<LeftEdgeList> {
-  void addNextItems() => items += List.generate(random.nextInt(10) + 1, randomEdgeColor);
+  void addNextItems() => items += List.generate(random.nextInt(10000) + 1, randomEdgeColor);
 
   List<Color> items = [];
 
@@ -95,28 +113,28 @@ class _LeftEdgeListState extends State<LeftEdgeList> {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      itemCount: items.length + 1,
-      // plus end button
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    return SliverAnimatedPaintExtent(
+      duration: kFastDuration,
+      child: SliverGrid(
+        // plus end button
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          if (index < items.length) {
+            return LeftItem(
+              item: items[index],
+            );
+          } else {
+            return OutlinedButton(
+              onPressed: () => setState(addNextItems),
+              child: Icon(Icons.add_outlined),
+            );
+          }
+        }, childCount: items.length + 1),
       ),
-      padding: EdgeInsets.all(16),
-      itemBuilder: (context, index) {
-        if (index < items.length) {
-          return LeftItem(
-            item: items[index],
-          );
-        } else {
-          return OutlinedButton(
-            onPressed: () => setState(addNextItems),
-            child: Icon(Icons.add_outlined),
-          );
-        }
-      },
-      shrinkWrap: true,
     );
   }
 }
@@ -150,35 +168,46 @@ class _MiddleListState extends State<MiddleList> {
     addNextItems();
   }
 
-  void addNextItems() => items += List.generate(random.nextInt(10) + 1, randomMiddleColor);
+  void addNextItems() => items += List.generate(random.nextInt(10000) + 1, randomMiddleColor);
 
   List<MaterialColor> items = [];
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        shrinkWrap: true,
-        itemBuilder: (context, index) {
-          if (index < items.length) {
-            return MiddleItem(
-              item: items[index],
-            );
-          } else {
-            return OutlinedButton(
-              onPressed: () => setState(addNextItems),
-              child: Icon(Icons.add_outlined),
-            );
-          }
-        },
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemCount: items.length + 1);
+    return SliverAnimatedPaintExtent(
+      duration: kFastDuration,
+      child: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index < items.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: MiddleItem(
+                  index: index,
+                  item: items[index],
+                ),
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: OutlinedButton(
+                  onPressed: () => setState(addNextItems),
+                  child: Icon(Icons.add_outlined),
+                ),
+              );
+            }
+          },
+          childCount: items.length + 1,
+        ),
+      ),
+    );
   }
 }
 
 class MiddleItem extends StatefulWidget {
-  const MiddleItem({Key? key, required this.item}) : super(key: key);
+  const MiddleItem({Key? key, required this.index, required this.item}) : super(key: key);
   final MaterialColor item;
+  final int index;
 
   @override
   _MiddleItemState createState() => _MiddleItemState();
@@ -239,7 +268,7 @@ class RightEdgeList extends StatefulWidget {
 }
 
 class _RightEdgeListState extends State<RightEdgeList> {
-  void addNextItems() => items += List.generate(random.nextInt(5) + 1, randomEdgeColor);
+  void addNextItems() => items += List.generate(random.nextInt(10000) + 1, randomEdgeColor);
 
   List<MaterialAccentColor> items = [];
 
@@ -251,24 +280,31 @@ class _RightEdgeListState extends State<RightEdgeList> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: items.length + 1,
-      // plus end button
-      padding: EdgeInsets.all(16),
-      itemBuilder: (context, index) {
-        if (index < items.length) {
-          return RightItem(
-            item: items[index].shade100,
-          );
-        } else {
-          return OutlinedButton(
-            onPressed: () => setState(addNextItems),
-            child: Icon(Icons.add_outlined),
-          );
-        }
-      },
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      shrinkWrap: true,
+    return SliverAnimatedPaintExtent(
+      duration: kFastDuration,
+      child: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index < items.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: RightItem(
+                  item: items[index].shade100,
+                ),
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: OutlinedButton(
+                  onPressed: () => setState(addNextItems),
+                  child: Icon(Icons.add_outlined),
+                ),
+              );
+            }
+          },
+          childCount: items.length + 1,
+        ),
+      ),
     );
   }
 }
@@ -335,12 +371,13 @@ class Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.all(30),
-      alignment: Alignment.center,
       color: Colors.blue.shade800,
       child: Text(
         'FOOTER',
         style: theme.textTheme.headline2?.copyWith(color: Colors.white70),
+        textAlign: TextAlign.center,
       ),
     );
   }
