@@ -47,10 +47,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    const lW = 1.0;
+    const mW = 3.5;
+    const rW = 1.5;
+    const fW = lW + mW + rW;
     final mediaQuery = MediaQuery.of(context);
-    final width = math.min(mediaQuery.size.width, 1280.0);
-    final rightEdgeListLeft = width * 7 / 10;
-    final leftEdgeListRight = width * 8 / 10;
+    final width = math.min(mediaQuery.size.width, 1350.0);
+    final rightEdgeListLeft = width * (mW + lW) / fW;
+    final leftEdgeListRight = width * (mW + rW) / fW;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -101,7 +105,7 @@ class LeftEdgeList extends StatefulWidget {
 }
 
 class _LeftEdgeListState extends State<LeftEdgeList> {
-  void addNextItems() => items += List.generate(random.nextInt(10000) + 1, randomEdgeColor);
+  void addNextItems() => items += List.generate(random.nextInt(10) + 1, randomEdgeColor);
 
   List<Color> items = [];
 
@@ -168,7 +172,7 @@ class _MiddleListState extends State<MiddleList> {
     addNextItems();
   }
 
-  void addNextItems() => items += List.generate(random.nextInt(10000) + 1, randomMiddleColor);
+  void addNextItems() => items += List.generate(random.nextInt(10) + 1, randomMiddleColor);
 
   List<MaterialColor> items = [];
 
@@ -268,7 +272,7 @@ class RightEdgeList extends StatefulWidget {
 }
 
 class _RightEdgeListState extends State<RightEdgeList> {
-  void addNextItems() => items += List.generate(random.nextInt(10000) + 1, randomEdgeColor);
+  void addNextItems() => items += List.generate(random.nextInt(10) + 1, randomEdgeColor);
 
   List<MaterialAccentColor> items = [];
 
